@@ -1,6 +1,6 @@
 export interface LoginUser {
     employeeCode: string;
-    password: number;
+    password: string;
 }
 
 interface User extends LoginUser {
