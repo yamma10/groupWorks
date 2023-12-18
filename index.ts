@@ -34,4 +34,4 @@ app.get("/test", async(req: express.Request,res: express.Response) => {
     }
 
     res.end();
-})
+});

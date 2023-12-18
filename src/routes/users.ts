@@ -8,7 +8,7 @@ router.get("/", (req: express.Request, res: express.Response) => {
     res.send("hello world");
 })
 
-router.post("/login", (req: express.Request, res: express.Response) => {
+router.post("/login", async (req: express.Request, res: express.Response) => {
     //loginUser
     let loginUser: LoginUser;
     try {
@@ -23,14 +23,16 @@ router.post("/login", (req: express.Request, res: express.Response) => {
             res.send("パスワードが入力されていません");
             return;
         }
-        // console.log(typeof(loginUser.employeeCode))
-        // console.log(typeof(loginUser.password))
 
-        const loginCheck:boolean = login(loginUser);
-        if(loginCheck) {
+
+        const loginCheck:string = await login(loginUser);
+        
+        if(loginCheck == "true") {
             res.send("ログイン成功");
-        } else {
+        } else if (loginCheck == "false") {
             res.send("ログイン失敗");
+        } else {
+            res.send(loginCheck);
         }
     } catch(e) {
         console.log(e);
