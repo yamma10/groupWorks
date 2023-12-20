@@ -1,6 +1,6 @@
 import express from "express";
 import { LoginUser, ResponseUser } from "../model/User";
-import { login, registerPass } from "../controllers/usersController";
+import { checkPass, login, registerPass } from "../controllers/usersController";
 import { generageOntimePass } from "../components/ontimePass";
 
 const router = express.Router();
@@ -68,8 +68,24 @@ router.post("/register_pass", async(req: express.Request, res: express.Response)
 
 })
 
-router.post("/check_onetime", (req: express.Request, res: express.Response) => {
-
+router.post("/check_onetime", async(req: express.Request, res: express.Response) => {
+    let resMessage = {
+        message: ""
+    }
+    if (req.body.employeeCode === undefined) {
+        resMessage.message = "担当者コードが入力されていません";
+        res.send(resMessage);
+        res.end();
+        return;
+    }
+    if (req.body.onetimePass === undefined) {
+        resMessage.message = "ワンタイムパスワードが入力されていません";
+        res.send(resMessage);
+        return;
+    }
+    resMessage.message = await checkPass(req.body.employeeCode, req.body.onetimePass);
+    res.send(resMessage);
+    res.end();
 })
 
 export default router;

@@ -1,6 +1,6 @@
 import express from "express";
 import { LoginUser, ResponseUser } from "../model/User";
-import { createLoginQuery, createRegisterPassQuery } from "../components/createQuery";
+import { createCheckPassQuery, createLoginQuery, createRegisterPassQuery, createSelectPassByCodeQuery } from "../components/createQuery";
 import mssql from "mssql";
 import {config} from "../../config";
 import { getTokenSourceMapRange } from "typescript";
@@ -65,4 +65,41 @@ export const registerPass = async(employeeCode: number): Promise<boolean> => {
         return false;
     }
     return true;
+}
+
+export const checkPass = async(employeeCode: number, onetimePass: string): Promise<string> => {
+    const query = createSelectPassByCodeQuery(employeeCode);
+    try {
+        const conn = await mssql.connect(config);
+
+        const res = await conn.request().query(query)
+        if (res.rowsAffected[0] == 0){
+            //返却されたレコードがない場合
+            return "ワンタイムパスワードが発行されていないか、期限が切れています";
+        } else if (res.recordset[0].ワンタイムパスワード != onetimePass) {
+            //ワンタイムパスワードが違う場合
+            let check: boolean = false;
+            res.recordset.map((recordset) => {
+                // console.log("入力されたワンタイムパスワード: " + onetimePass)
+                // console.log("record: " + recordset.ワンタイムパスワード)
+                // console.log(recordset.ワンタイムパスワード == onetimePass)
+                if (recordset.ワンタイムパスワード == onetimePass) {
+                    check = true;
+                }
+            });
+            if (check) {
+                return "無効なワンタイムパスワードです"
+            } else {
+                return "ワンタイムパスワードが違います";
+            }
+            
+        } else if (res.recordset[0].ワンタイムパスワード == onetimePass) {
+            return "ok";
+        } else {
+            return "無効なワンタイムパスワードです";
+        }
+    } catch(e: any) {
+        console.log(e.message)
+        return e.message;
+    }
 }
