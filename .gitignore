@@ -4,7 +4,7 @@ node_modules/
 
 memo.txt
 
-src/components/
+src/components/createQuery.ts
 
 config.ts
 
