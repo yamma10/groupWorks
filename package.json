@@ -19,6 +19,8 @@
     "mssql": "^10.0.1",
     "oledb.js": "^1.9.1",
     "otplib": "^12.0.1",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },

@@ -1,12 +1,15 @@
 import express from 'express';
+import http from 'http';
 import usersRoute  from './src/routes/users';
-import { PrismaClient } from "@prisma/client";
-import mssql from "mssql";
-import {config} from "./config";
-import fs from "fs";
+import { Server, Socket } from "socket.io"
 // const prisma = new PrismaClient();
 
 const app: express.Express = express();
+const server = http.createServer(app);
+
+const WS_PORT = 8080;
+const io = new Server(WS_PORT);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -16,22 +19,24 @@ app.listen(5000, () => {
 
 app.use("/users", usersRoute);
 
-app.get("/", (req: express.Request, res: express.Response) => {
-    res.send("hello world")
+
+io.on("connection", (socket: Socket) => {
+    
+
+
+    socket.on("message", (message) => {
+        console.log(`message: ${message}`);
+        io.emit('message', message);
+    });
+
+    socket.on("disconnect", () => {
+        console.log("disconnected");
+        socket.disconnect();
+    });
+
+
 })
 
-app.get("/test", async(req: express.Request,res: express.Response) => {
-    try {
-        const conn = await mssql.connect(config);
-
-        const str = fs.readFileSync("./src/sql/test.sql", "utf-8")
-
-        const res = await conn.request().query(str)
-        console.log(res)
-        
-    } catch(e: any) {
-        res.status(500).send(e.message)
-    }
-
-    res.end();
-});
+// server.listen(WS_PORT, () => {
+//     console.log(`ws server is running on port ${WS_PORT}`)
+// });
