@@ -3,7 +3,7 @@ export interface LoginUser {
     password: number;
 }
 
-interface User extends LoginUser {
+export interface User extends LoginUser {
     employeeCode: number;
     phoneNumber: string;
     employeeName: string;
@@ -15,8 +15,8 @@ interface User extends LoginUser {
     flag: number;
 }
 
-interface ResponseUser extends LoginUser {
+export interface ResponseUser  {
     employeeCode: number;
     employeeName: string;
-    ontimePass: string;
+    message: string;
 }

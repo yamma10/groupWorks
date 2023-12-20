@@ -1,13 +1,20 @@
 import express from "express";
-import { LoginUser } from "../model/User";
-import { createLoginQuery } from "../components/createQuery";
+import { LoginUser, ResponseUser } from "../model/User";
+import { createLoginQuery, createRegisterPassQuery } from "../components/createQuery";
 import mssql from "mssql";
 import {config} from "../../config";
+import { getTokenSourceMapRange } from "typescript";
+import { generageOntimePass } from "../components/ontimePass";
 
-export const login = async(loginUser: LoginUser): Promise<string> => {
+export const login = async(loginUser: LoginUser): Promise<ResponseUser> => {
     //loginの処理
 
-
+    let user: ResponseUser = {
+        employeeCode: 0,
+        employeeName: "",
+        message: "",
+    };
+    
     //クエリの作成
     const query: string = createLoginQuery(loginUser);
     //sqlの実行
@@ -15,16 +22,47 @@ export const login = async(loginUser: LoginUser): Promise<string> => {
         const conn = await mssql.connect(config);
 
         const res = await conn.request().query(query)
-        console.log(res)
+        //console.log(res)
         
+        user.employeeCode = 0;
         if (res.rowsAffected[0] == 0){
-            return "false";
+            user.message = "false"
+            return user;
+        } else {
+            if (res.recordset[0].パスワード != loginUser.password) {
+                user.message = "パスワードが違います"
+                return user;
+            } else {
+                user.employeeCode = res.recordset[0].担当者コード;
+                user.employeeName = res.recordset[0].担当者名;
+                user.message = "true"
+            }
+        
         }
     } catch(e: any) {
         console.log(e.message)
+        user.message = e.message;
         return e.message;
     }
 
     //loginできたらtrueを返す
-    return "true";
+    return user;
+}
+
+export const registerPass = async(employeeCode: number): Promise<boolean> => {
+    const onetimePass: string = generageOntimePass();
+    //クエリの作成
+    const query: string = createRegisterPassQuery(employeeCode, onetimePass);
+
+    //sqlの実行
+    try {
+        const conn = await mssql.connect(config);
+
+        const res = await conn.request().query(query)
+        
+    } catch(e: any) {
+        console.log(e.message)
+        return false;
+    }
+    return true;
 }

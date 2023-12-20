@@ -1,6 +1,7 @@
 import express from "express";
-import { LoginUser } from "../model/User";
-import { login } from "../controllers/usersController";
+import { LoginUser, ResponseUser } from "../model/User";
+import { login, registerPass } from "../controllers/usersController";
+import { generageOntimePass } from "../components/ontimePass";
 
 const router = express.Router();
 
@@ -8,13 +9,14 @@ router.get("/", (req: express.Request, res: express.Response) => {
     res.send("hello world");
 })
 
+//JSONを受け取る
 router.post("/login", async (req: express.Request, res: express.Response) => {
     //loginUser
     let loginUser: LoginUser;
     try {
         loginUser = req.body;
         //loginUserのemployeeCodeが空だったら
-        if(loginUser.employeeCode === "") {
+        if(loginUser.account === "") {
             res.send("担当者コードが入力されていません");
             return ;
         }
@@ -25,20 +27,49 @@ router.post("/login", async (req: express.Request, res: express.Response) => {
         }
 
 
-        const loginCheck:string = await login(loginUser);
-        
-        if(loginCheck == "true") {
-            res.send("ログイン成功");
-        } else if (loginCheck == "false") {
-            res.send("ログイン失敗");
+        const user: ResponseUser = await login(loginUser);
+        const ontimePasword: string = generageOntimePass();
+
+        //console.log(user)
+        if(user.message == "true") {
+            res.send(user);
+        } else if (user.message == "false") {
+            //console.log("false")
+            res.send(user);
         } else {
-            res.send(loginCheck);
+            res.send(user);
         }
     } catch(e) {
         console.log(e);
     } 
     
     res.end();
+})
+
+//クエリで受け取る
+router.post("/register_pass", async(req: express.Request, res: express.Response) => {
+    let resMessage = {
+        message: ""
+    }
+    if (req.body.employeeCode === undefined) {
+        resMessage.message = "担当者コードが入力されていません";
+        res.send(resMessage);
+        return;
+    }
+
+    const register = await registerPass(req.body.employeeCode);
+    if (register) {
+        resMessage.message = "ok";
+    } else {
+        resMessage.message = "false";
+    }
+    res.send(resMessage);
+    res.end();
+
+})
+
+router.post("/check_onetime", (req: express.Request, res: express.Response) => {
+
 })
 
 export default router;
