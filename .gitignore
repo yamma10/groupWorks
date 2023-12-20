@@ -4,4 +4,11 @@ node_modules/
 
 memo.txt
 
+src/components/createQuery.ts
+
+config.ts
+
+src/sql/
+
+
 
