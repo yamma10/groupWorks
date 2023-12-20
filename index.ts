@@ -16,22 +16,4 @@ app.listen(5000, () => {
 
 app.use("/users", usersRoute);
 
-app.get("/", (req: express.Request, res: express.Response) => {
-    res.send("hello world")
-})
 
-app.get("/test", async(req: express.Request,res: express.Response) => {
-    try {
-        const conn = await mssql.connect(config);
-
-        const str = fs.readFileSync("./src/sql/test.sql", "utf-8")
-
-        const res = await conn.request().query(str)
-        console.log(res)
-        
-    } catch(e: any) {
-        res.status(500).send(e.message)
-    }
-
-    res.end();
-});
