@@ -99,7 +99,7 @@ export const checkPass = async(employeeCode: number, onetimePass: string): Promi
             return "無効なワンタイムパスワードです";
         }
     } catch(e: any) {
-        console.log(e.message)
+        console.log(e.message);
         return e.message;
     }
 }
