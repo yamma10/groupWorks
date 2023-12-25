@@ -1,12 +1,12 @@
 import express from "express";
 import { LoginUser, ResponseUser } from "../model/User";
-import { checkPass, login, registerPass } from "../controllers/usersController";
+import { checkPass, login, registerPass, getAddressAndSendEmail } from "../controllers/usersController";
 import { generageOntimePass } from "../components/ontimePass";
 
 const router = express.Router();
 
 router.get("/", (req: express.Request, res: express.Response) => {
-    res.send("hello world");
+    //sendEmail();
 })
 
 //JSONを受け取る
@@ -56,17 +56,13 @@ router.post("/register_pass", async(req: express.Request, res: express.Response)
         res.send(resMessage);
         return;
     }
-
-    //メール送信-------------------------------------ここから
-
-    //メール送信-------------------------------------ここまで
     
-    const register = await registerPass(req.body.employeeCode);
-    if (register) {
-        resMessage.message = "ok";
-    } else {
-        resMessage.message = "false";
+    const otp = await registerPass(req.body.employeeCode); 
+    
+    if (otp.message == "true") {
+        resMessage.message = await getAddressAndSendEmail(otp.onetimePass, otp.employeeCode);
     }
+
     res.send(resMessage);
     res.end();
 
@@ -91,5 +87,6 @@ router.post("/check_onetime", async(req: express.Request, res: express.Response)
     res.send(resMessage);
     res.end();
 })
+
 
 export default router;
