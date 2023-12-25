@@ -57,6 +57,10 @@ router.post("/register_pass", async(req: express.Request, res: express.Response)
         return;
     }
 
+    //メール送信-------------------------------------ここから
+
+    //メール送信-------------------------------------ここまで
+    
     const register = await registerPass(req.body.employeeCode);
     if (register) {
         resMessage.message = "ok";

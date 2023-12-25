@@ -1,6 +1,6 @@
 import express from "express";
 import { LoginUser, ResponseUser } from "../model/User";
-import { createCheckPassQuery, createLoginQuery, createRegisterPassQuery, createSelectPassByCodeQuery } from "../components/createQuery";
+import {  createLoginQuery, createRegisterPassQuery, createSelectPassByCodeQuery } from "../components/createQuery";
 import mssql from "mssql";
 import {config} from "../../config";
 import { getTokenSourceMapRange } from "typescript";
