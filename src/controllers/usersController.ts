@@ -1,10 +1,14 @@
 import express from "express";
 import { LoginUser, ResponseUser } from "../model/User";
-import {  createLoginQuery, createRegisterPassQuery, createSelectPassByCodeQuery } from "../components/createQuery";
+import {  createLoginQuery, createRegisterPassQuery, createSelectMailQuery, createSelectPassByCodeQuery } from "../components/createQuery";
 import mssql from "mssql";
-import {config} from "../../config";
+import {config, options } from "../../config";
 import { getTokenSourceMapRange } from "typescript";
 import { generageOntimePass } from "../components/ontimePass";
+import nodemailer from "nodemailer";
+import { resOtp } from "../model/Otp";
+import { send } from "../components/send";
+
 
 export const login = async(loginUser: LoginUser): Promise<ResponseUser> => {
     //loginの処理
@@ -49,22 +53,39 @@ export const login = async(loginUser: LoginUser): Promise<ResponseUser> => {
     return user;
 }
 
-export const registerPass = async(employeeCode: number): Promise<boolean> => {
+export const registerPass = async(employeeCode: number): Promise<resOtp> => {
     const onetimePass: string = generageOntimePass();
     //クエリの作成
     const query: string = createRegisterPassQuery(employeeCode, onetimePass);
+
+    let resOtp: resOtp = {
+        employeeCode: 0,
+        onetimePass: "",
+        message: "",
+    }
 
     //sqlの実行
     try {
         const conn = await mssql.connect(config);
 
         const res = await conn.request().query(query)
+        if(res.rowsAffected[0] == 0) {
+            resOtp.message = "false";
+            return resOtp;
+        } else {
+            console.log("get otp")
+            resOtp.employeeCode = res.recordset[0].担当者コード;
+            resOtp.onetimePass = res.recordset[0].ワンタイムパスワード;
+            resOtp.message = "true";
+        }
+        
         
     } catch(e: any) {
         console.log(e.message)
-        return false;
+        resOtp.message = e.message;
+        return resOtp;
     }
-    return true;
+    return resOtp;
 }
 
 export const checkPass = async(employeeCode: number, onetimePass: string): Promise<string> => {
@@ -102,4 +123,32 @@ export const checkPass = async(employeeCode: number, onetimePass: string): Promi
         console.log(e.message);
         return e.message;
     }
+}
+
+export const getAddressAndSendEmail = async(otp:string, employeeCode:number):Promise<string> => {
+
+    const query = createSelectMailQuery(employeeCode);
+    try {
+        const conn = await mssql.connect(config);
+
+        const res = await conn.request().query(query)
+        if (res.rowsAffected[0] == 0){
+            //返却されたレコードがない場合
+            console.log("メールアドレスが登録されていません");
+        } else {
+            const mailAddress: string = res.recordset[0].メールアドレス;
+            const check = await send(mailAddress, otp);
+            if (check) {
+                console.log("メールを送信しました");
+            } else {
+                console.log("メールを送信できませんでした");
+            }
+        }
+    } catch(e: any) {
+        console.log(e.message);
+        return e.message;
+    }
+
+
+    return "true";
 }
