@@ -5,7 +5,7 @@ export const send = async(mailAddress: string, otp: string): Promise<boolean>  =
     const mail = {
         from: process.env.senderAddress,
         to: `${mailAddress}`,
-        subject: "[虹と海のホスピタル] GroupWorksワンタイムパスワード",
+        subject: `[${process.env.mailedName}] GroupWorksワンタイムパスワード`,
         text: `パスワードは以下です\n${otp}`
     };
 
