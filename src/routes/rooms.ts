@@ -1,18 +1,42 @@
 import express from 'express';
 import { register } from 'ts-node';
-import { registerRoom, registerMember } from '../controllers/roomsController';
+import { registerRoom, registerMember, getAllRooms, getRoomById } from '../controllers/roomsController';
 import { resRoom } from '../model/Room';
+import { createSelectAllRoomQuery } from '../components/createQuery';
 
 const router = express.Router();
 
-router.get("/", (req: express.Request, res: express.Response) => {
-    res.send("hello world");
+router.get("/", async(req: express.Request, res: express.Response) => {
+    const result = await getAllRooms();
+    res.send(result);
+    res.end();
+});
+
+router.get("/:id", async(req: express.Request, res: express.Response) => {
+    if (req.params.id === undefined) {
+        res.send("idが入力されていません");
+        return;
+    }
+
+    const result = await getRoomById(Number(req.params.id));
+    res.send(result);
 })
+
+router.get("/:id", (req: express.Request, res: express.Response) => {
+    let resMessage = {
+        message: ""
+    }
+    if (req.params.id === undefined) {
+        resMessage.message = "idが入力されていません";
+        res.send(resMessage);
+        return;
+    }
+
+});
 
 //トークルームの登録
 router.post("/", async(req: express.Request, res: express.Response) => { 
     let resMessage = {
-
         message: ""
     }
     if (req.body.name === undefined) {

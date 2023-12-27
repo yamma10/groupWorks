@@ -1,12 +1,25 @@
 import express from "express";
 import { LoginUser, ResponseUser } from "../model/User";
-import { checkPass, login, registerPass, getAddressAndSendEmail } from "../controllers/usersController";
+import { checkPass, login, registerPass, getAddressAndSendEmail, getAllUsers, getUserByCode } from "../controllers/usersController";
 import { generageOntimePass } from "../components/ontimePass";
+import { createSelectAllRoomQuery } from "../components/createQuery";
+import { getAllRooms } from "../controllers/roomsController";
 
 const router = express.Router();
 
-router.get("/", (req: express.Request, res: express.Response) => {
-    //sendEmail();
+router.get("/", async(req: express.Request, res: express.Response) => {
+    const result = await getAllUsers();
+    res.send(result);
+})
+
+router.get("/:id", async(req: express.Request, res: express.Response) => {
+    if (req.params.id === undefined) {
+        res.send("idが入力されていません");
+        return;
+    }
+
+    const result = await getUserByCode(Number(req.params.id));
+    res.send(result);
 })
 
 //JSONを受け取る
