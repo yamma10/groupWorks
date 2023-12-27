@@ -1,6 +1,6 @@
 import express from "express";
 import { LoginUser, ResponseUser } from "../model/User";
-import {  createLoginQuery, createRegisterPassQuery, createSelectMailQuery, createSelectPassByCodeQuery } from "../components/createQuery";
+import {  createLoginQuery, createRegisterPassQuery, createSelectAllUsersQuery, createSelectMailQuery, createSelectPassByCodeQuery, createSelectUserByCodeQuery } from "../components/createQuery";
 import mssql from "mssql";
 import {config, options } from "../../config";
 import { getTokenSourceMapRange } from "typescript";
@@ -151,4 +151,38 @@ export const getAddressAndSendEmail = async(otp:string, employeeCode:number):Pro
 
 
     return "true";
+}
+
+export const getAllUsers = async(): Promise<any> => {
+    const query = createSelectAllUsersQuery();
+    
+    try {
+        const conn = await mssql.connect(config);
+        const res = await conn.request().query(query);
+        
+        console.log(res.recordset);
+        return res.recordset;
+    }
+    catch (e: any) {
+        console.log(e);
+        return e.message;
+    }
+
+}
+
+export const getUserByCode = async(employeeCode: number): Promise<any> => {
+    const query = createSelectUserByCodeQuery(employeeCode);
+    
+    try {
+        const conn = await mssql.connect(config);
+        const res = await conn.request().query(query);
+        
+        console.log(res.recordset);
+        return res.recordset;
+    }
+    catch (e: any) {
+        console.log(e);
+        return e.message;
+    }
+
 }

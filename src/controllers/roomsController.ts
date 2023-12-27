@@ -1,7 +1,59 @@
 import mssql from "mssql";
-import { createRegisterRoomQuery,createRegisterRoomMemberQuery } from "../components/createQuery";
+import { createRegisterRoomQuery,createRegisterRoomMemberQuery, createSelectAllRoomQuery, createSelectRoomByIdQuery, createSelectUsersByRoomIdQuery } from "../components/createQuery";
 import {config} from "../../config";
 import { Room, resRoom, resRoomMember } from "../model/Room";
+
+export const getAllRooms = async(): Promise<any> => {
+    //クエリの作成
+    const query = createSelectAllRoomQuery();
+
+    //sqlの実行
+    try {
+        const conn = await mssql.connect(config);
+        const res = await conn.request().query(query);
+        
+        console.log(res.recordset);
+        return res.recordset;
+    }
+    catch (e: any) {
+        console.log(e);
+        return e.message;
+    }
+
+}
+
+export const getRoomById = async(id: number): Promise<any> => {
+    const query = createSelectRoomByIdQuery(id);
+
+    try {
+        const conn = await mssql.connect(config);
+        const res = await conn.request().query(query);
+        
+        console.log(res.recordset);
+        return res.recordset;
+    }
+    catch (e: any) {
+        console.log(e);
+        return e.message;
+    }
+}
+
+export const getUsersByRoomId = async(id: number): Promise<any> =>  {
+    const query = createSelectUsersByRoomIdQuery(id)
+
+    try {
+        const conn = await mssql.connect(config);
+        const res = await conn.request().query(query);
+        
+        console.log(res.recordset);
+        return res.recordset;
+    }
+    catch (e: any) {
+        console.log(e);
+        return e.message;
+    }
+}
+
 
 export const registerRoom = async (roomName: string): Promise<resRoom> => {
     //クエリの作成
