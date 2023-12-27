@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import usersRoute  from './src/routes/users';
 import roomsRoute  from './src/routes/rooms';
+import messagesRoute  from './src/routes/messages';
 import { Server, Socket } from "socket.io"
 // const prisma = new PrismaClient();
 
@@ -20,6 +21,7 @@ app.listen(5000, () => {
 
 app.use("/users", usersRoute);
 app.use("/rooms", roomsRoute);
+app.use("/messages", messagesRoute);
 
 
 io.on("connection", (socket: Socket) => {
