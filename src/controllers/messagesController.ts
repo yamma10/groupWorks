@@ -1,4 +1,4 @@
-import { createSelectAllMessagesQuery, createSelectMessagesByRoomIdQuery } from "../components/createQuery"
+import { createRegisterMessageQuery, createSelectAllMessagesQuery, createSelectMessagesByRoomIdQuery } from "../components/createQuery"
 import mssql from "mssql";
 import { config } from "../../config";
 
@@ -18,3 +18,18 @@ export const getAllMessages = async (): Promise<any> => {
     }
 }
 
+export const registerMessage = async (message: string, employeeCode: number, roomId: number): Promise<any> => {
+    const query = createRegisterMessageQuery(roomId, employeeCode, message);
+
+    try {
+        const conn = await mssql.connect(config);
+        const res = await conn.request().query(query);
+
+        console.log(res.recordset);
+        return res.recordset;
+    }
+    catch (e: any) {
+        console.log(e);
+        return e.message;
+    }
+}
