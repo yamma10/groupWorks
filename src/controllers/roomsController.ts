@@ -1,5 +1,5 @@
 import mssql from "mssql";
-import { createRegisterRoomQuery,createRegisterRoomMemberQuery, createSelectAllRoomQuery, createSelectRoomByIdQuery, createSelectUsersByRoomIdQuery } from "../components/createQuery";
+import { createRegisterRoomQuery,createRegisterRoomMemberQuery, createSelectAllRoomQuery, createSelectRoomByIdQuery, createSelectUsersByRoomIdQuery, createSelectMessagesByRoomIdQuery } from "../components/createQuery";
 import {config} from "../../config";
 import { Room, resRoom, resRoomMember } from "../model/Room";
 
@@ -45,6 +45,22 @@ export const getUsersByRoomId = async(id: number): Promise<any> =>  {
         const conn = await mssql.connect(config);
         const res = await conn.request().query(query);
         
+        console.log(res.recordset);
+        return res.recordset;
+    }
+    catch (e: any) {
+        console.log(e);
+        return e.message;
+    }
+}
+
+export const getMessagesById = async (id: number) => {
+    const query = createSelectMessagesByRoomIdQuery(id);
+
+    try {
+        const conn = await mssql.connect(config);
+        const res = await conn.request().query(query);
+
         console.log(res.recordset);
         return res.recordset;
     }
