@@ -18,7 +18,7 @@ export const getAllMessages = async (): Promise<any> => {
     }
 }
 
-export const registerMessage = async (message: string, employeeCode: number, roomId: number): Promise<any> => {
+export const registerMessage = async (roomId: number,employeeCode: number,message: string): Promise<any> => {
     const query = createRegisterMessageQuery(roomId, employeeCode, message);
 
     try {

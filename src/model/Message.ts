@@ -8,4 +8,4 @@ export interface Message {
 
 export interface resMessage extends Message {
     message: string;
-}
+}  
