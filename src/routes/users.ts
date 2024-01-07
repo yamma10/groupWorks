@@ -9,8 +9,7 @@ const router = express.Router();
 
 router.get("/", async(req: express.Request, res: express.Response) => {
     const result = await getAllUsers();
-    // res.send(result);
-    res.send("hello")
+    res.send(result);
 })
 
 router.get("/:id", async(req: express.Request, res: express.Response) => {
@@ -93,9 +92,7 @@ router.post("/register_pass", async(req: express.Request, res: express.Response)
     }
     
     const result = await registerPass(req.body.employeeCode); 
-    
-    if ( result == "true") {
-    }
+    resMessage.message = result;
 
     res.send(resMessage);
     res.end();

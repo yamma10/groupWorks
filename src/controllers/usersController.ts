@@ -1,5 +1,5 @@
 import express from "express";
-import { LoginUser, ResponseUser } from "../model/User";
+import { LoginUser, ResponseUser, User } from "../model/User";
 import {  createLoginQuery, createRegisterPassQuery, createSelectAllUsersQuery, createSelectMailQuery, createSelectMessagesByCodeQuery, createSelectPassByCodeQuery, createSelectRoomsByCodeQuery, createSelectUserByCodeQuery } from "../components/createQuery";
 import mssql from "mssql";
 import {config, options } from "../../config";
@@ -8,6 +8,7 @@ import { generageOntimePass } from "../components/ontimePass";
 import nodemailer from "nodemailer";
 import { send } from "../components/send";
 import { Otp } from "../model/Otp";
+import { Room } from "../model/Room";
 
 
 export const login = async(loginUser: LoginUser): Promise<ResponseUser> => {
@@ -152,8 +153,16 @@ export const getAllUsers = async(): Promise<any> => {
         const conn = await mssql.connect(config);
         const res = await conn.request().query(query);
         
-        console.log(res.recordset);
-        return res.recordset;
+        console.log("get All Users");
+        let users : User[]  = [];
+        if(res.rowsAffected[0] == 0) {
+            throw new Error("ユーザーが存在しません");
+        }
+        res.recordset.map((recordset) => {
+            const user = new User(recordset.担当者コード, recordset.担当者名, recordset.部署名, recordset.役職, recordset.無効フラグ);
+            users.push(user);
+        });
+        return users;
     }
     catch (e: any) {
         console.log(e);
@@ -169,8 +178,12 @@ export const getUserByCode = async(employeeCode: number): Promise<any> => {
         const conn = await mssql.connect(config);
         const res = await conn.request().query(query);
         
-        console.log(res.recordset);
-        return res.recordset;
+        console.log("get User By Code");
+        if(res.rowsAffected[0] == 0) {
+            throw new Error("ユーザーが存在しません");
+        }
+        const user = new User(res.recordset[0].担当者コード, res.recordset[0].担当者名, res.recordset[0].部署名, res.recordset[0].役職, res.recordset[0].無効フラグ);
+        return user;
     }
     catch (e: any) {
         console.log(e);
@@ -186,8 +199,16 @@ export const getRoomsByCode = async(employeeCode: number): Promise<any> => {
         const conn = await mssql.connect(config);
         const res = await conn.request().query(query);
         
-        console.log(res.recordset);
-        return res.recordset;
+        console.log("get Rooms By Code");
+        if(res.rowsAffected[0] == 0) {
+            throw new Error("ルームが存在しません");
+        }
+        let rooms : Room[] = [];
+        res.recordset.map((recordset) => {
+            const room = new Room(recordset.ルームNo, recordset.ルーム名);
+            rooms.push(room);
+        });
+        return rooms;
     }
     catch (e: any) {
         console.log(e);
