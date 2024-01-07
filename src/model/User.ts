@@ -1,11 +1,21 @@
-export interface LoginUser {
+export class LoginUser {
+    constructor(account: string, password: number) {
+        this.account = account;
+        this.password = password;
+    }
     account: string;
     password: number;
 }
 
-export interface User extends LoginUser {
+export class User  {
+    constructor(employeeCode: number, employeeName: string, division: string, position: string, flag: number) {   
+        this.employeeCode = employeeCode;
+        this.employeeName = employeeName;
+        this.division = division;
+        this.position = position;
+        this.flag = flag;
+    }
     employeeCode: number;
-    phoneNumber: string;
     employeeName: string;
     //部署
     division: string;

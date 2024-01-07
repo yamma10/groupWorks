@@ -92,10 +92,9 @@ router.post("/register_pass", async(req: express.Request, res: express.Response)
         return;
     }
     
-    const otp = await registerPass(req.body.employeeCode); 
+    const result = await registerPass(req.body.employeeCode); 
     
-    if (otp.message == "true") {
-        resMessage.message = await getAddressAndSendEmail(otp.onetimePass, otp.employeeCode);
+    if ( result == "true") {
     }
 
     res.send(resMessage);
