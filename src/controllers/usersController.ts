@@ -6,8 +6,8 @@ import {config, options } from "../../config";
 import { getTokenSourceMapRange } from "typescript";
 import { generageOntimePass } from "../components/ontimePass";
 import nodemailer from "nodemailer";
-import { resOtp } from "../model/Otp";
 import { send } from "../components/send";
+import { Otp } from "../model/Otp";
 
 
 export const login = async(loginUser: LoginUser): Promise<ResponseUser> => {
@@ -53,16 +53,10 @@ export const login = async(loginUser: LoginUser): Promise<ResponseUser> => {
     return user;
 }
 
-export const registerPass = async(employeeCode: number): Promise<resOtp> => {
+export const registerPass = async(employeeCode: number): Promise<any> => {
     const onetimePass: string = generageOntimePass();
     //クエリの作成
     const query: string = createRegisterPassQuery(employeeCode, onetimePass);
-
-    let resOtp: resOtp = {
-        employeeCode: 0,
-        onetimePass: "",
-        message: "",
-    }
 
     //sqlの実行
     try {
@@ -70,22 +64,20 @@ export const registerPass = async(employeeCode: number): Promise<resOtp> => {
 
         const res = await conn.request().query(query)
         if(res.rowsAffected[0] == 0) {
-            resOtp.message = "false";
-            return resOtp;
+
+            return "false";
         } else {
             console.log("get otp")
-            resOtp.employeeCode = res.recordset[0].担当者コード;
-            resOtp.onetimePass = res.recordset[0].ワンタイムパスワード;
-            resOtp.message = "true";
+            const otp = new Otp(res.recordset[0].担当者コード,res.recordset[0].ワンタイムパスワード);
+            const check = await getAddressAndSendEmail(otp.onetimePass, otp.employeeCode);
+            return "true";
         }
         
         
     } catch(e: any) {
         console.log(e.message)
-        resOtp.message = e.message;
-        return resOtp;
+        return e.message;
     }
-    return resOtp;
 }
 
 export const checkPass = async(employeeCode: number, onetimePass: string): Promise<string> => {

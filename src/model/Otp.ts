@@ -1,8 +1,9 @@
-export interface Otp {
+export class Otp {
+    constructor(employeeCode: number, onetimePass: string) {
+        this.employeeCode = employeeCode;
+        this.onetimePass = onetimePass;
+    }
     employeeCode: number;
     onetimePass: string;
 }
 
-export interface resOtp extends Otp {
-    message: string;
-}
