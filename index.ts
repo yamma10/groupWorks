@@ -4,6 +4,8 @@ import usersRoute  from './src/routes/users';
 import roomsRoute  from './src/routes/rooms';
 import messagesRoute  from './src/routes/messages';
 import { Server, Socket } from "socket.io"
+import { getAllMessages, registerMessage } from './src/controllers/messagesController';
+import { registerMember } from './src/controllers/roomsController';
 // const prisma = new PrismaClient();
 
 const app: express.Express = express();
@@ -25,13 +27,35 @@ app.use("/messages", messagesRoute);
 
 
 io.on("connection", (socket: Socket) => {
-    
-
 
     socket.on("message", (message) => {
         console.log(`message: ${message}`);
-        io.emit('message', message);
+        socket.emit('message', message + ":テスト");
     });
+
+    socket.on("join", (id:string) => {
+        
+        socket.join(id.toString());
+        console.log(`User joined room: ${id}`);
+        io.to(id.toString()).emit("chat","eeee")
+    });
+
+    socket.on("sendMessage", async(data:any) => {
+        const { id, employeeCode, message} = data;
+        try {
+            const res = await registerMessage(id, employeeCode, message);
+            io.to(id.toString()).emit("chat",message);
+            io.to(id.toString())
+        } catch(e) {
+            console.log(e);
+        }
+        
+    })
+
+    socket.on("leave", (id:string) => {
+        socket.leave(id.toString());
+        console.log(`User left room: ${id}`);
+    })
 
     socket.on("disconnect", () => {
         console.log("disconnected");
