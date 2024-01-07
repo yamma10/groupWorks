@@ -6,6 +6,7 @@ import messagesRoute  from './src/routes/messages';
 import { Server, Socket } from "socket.io"
 import { getAllMessages, registerMessage } from './src/controllers/messagesController';
 import { registerMember } from './src/controllers/roomsController';
+import { Message } from './src/model/Message';
 // const prisma = new PrismaClient();
 
 const app: express.Express = express();
@@ -41,9 +42,10 @@ io.on("connection", (socket: Socket) => {
     });
 
     socket.on("sendMessage", async(data:any) => {
-        const { id, employeeCode, message} = data;
+        const { id, employeeCode, employeeName, text} = data;
         try {
-            const res = await registerMessage(id, employeeCode, message);
+            const message = new Message(id, employeeCode, employeeName, text)
+            const res = await registerMessage(message);
             io.to(id.toString()).emit("chat",message);
             io.to(id.toString())
         } catch(e) {
