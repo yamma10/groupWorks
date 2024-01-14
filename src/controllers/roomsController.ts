@@ -1,11 +1,11 @@
 import mssql from "mssql";
 import { createRegisterRoomQuery,createRegisterRoomMemberQuery, createSelectAllRoomQuery, createSelectRoomByIdQuery, createSelectUsersByRoomIdQuery, createSelectMessagesByRoomIdQuery } from "../components/createQuery";
 import {config} from "../../config";
-import { Room, RoomMember, resRoom, resRoomMember } from "../model/Room";
+import { Room, RoomMember } from "../model/Room";
 import { User } from "../model/User";
 import { Message } from "../model/Message";
 
-export const getAllRooms = async(): Promise<any> => {
+export const getAllRooms = async(): Promise<Room[]> => {
     //クエリの作成
     const query = createSelectAllRoomQuery();
 
@@ -16,7 +16,7 @@ export const getAllRooms = async(): Promise<any> => {
         
         console.log("getAllRooms");
         if (res.rowsAffected[0] == 0) {
-            return "false";
+            throw new Error("トークルームがありません");
         }
 
 
@@ -28,13 +28,12 @@ export const getAllRooms = async(): Promise<any> => {
         return rooms;
     }
     catch (e: any) {
-        console.log(e);
-        return e.message;
+        throw new Error(e.message);
     }
 
 }
 
-export const getRoomById = async(id: number): Promise<any> => {
+export const getRoomById = async(id: number): Promise<Room> => {
     const query = createSelectRoomByIdQuery(id);
 
     try {
@@ -44,18 +43,18 @@ export const getRoomById = async(id: number): Promise<any> => {
         console.log("getRoomById");
 
         if (res.rowsAffected[0] == 0) {
-            return "false";
+            throw new Error("トークルームが存在しません");
         }
         let room = new Room(res.recordset[0].ルームNo, res.recordset[0].ルーム名);
         return room;
     }
     catch (e: any) {
         console.log(e);
-        return e.message;
+        throw new Error(e.message)
     }
 }
 
-export const getUsersByRoomId = async(id: number): Promise<any> =>  {
+export const getUsersByRoomId = async(id: number): Promise<User[]> =>  {
     const query = createSelectUsersByRoomIdQuery(id)
 
     try {
@@ -72,11 +71,11 @@ export const getUsersByRoomId = async(id: number): Promise<any> =>  {
     }
     catch (e: any) {
         console.log(e);
-        return e.message;
+        throw new Error(e.message);
     }
 }
-
-export const getMessagesById = async (id: number) => {
+//ルームIDからすべてのメッセージを取得
+export const getMessagesById = async (id: number): Promise<Message[]> => {
     const query = createSelectMessagesByRoomIdQuery(id);
 
     try {
@@ -93,12 +92,12 @@ export const getMessagesById = async (id: number) => {
     }
     catch (e: any) {
         console.log(e);
-        return e.message;
+        throw new Error(e.message);
     }
 }
 
 
-export const registerRoom = async (roomName: string): Promise<any> => {
+export const registerRoom = async (roomName: string): Promise<Room> => {
     //クエリの作成
     const query = createRegisterRoomQuery(roomName)
 
@@ -108,19 +107,19 @@ export const registerRoom = async (roomName: string): Promise<any> => {
         const res = await conn.request().query(query);
         console.log("registerRoom")
         if (res.rowsAffected[0] == 0) {
-            return "false";
+            throw new Error("トークルームの登録に失敗しました");
         }
         let room = new Room(res.recordset[0].ルームNo, res.recordset[0].ルーム名);
         return room;
     }
     catch (e: any) {
-        console.log(e);
-        return e.message
+        console.log(e.message);
+        throw new Error(e.message);
     }
 
 }
 
-export const registerMember = async (employeeCode: number, id: number): Promise<any> => {
+export const registerMember = async (employeeCode: number, id: number): Promise<RoomMember> => {
     //クエリの作成
     const query = createRegisterRoomMemberQuery(id,employeeCode);
     console.log(query);
@@ -130,13 +129,13 @@ export const registerMember = async (employeeCode: number, id: number): Promise<
         const res = await conn.request().query(query);
         console.log("registerMember")
         if (res.rowsAffected[0] == 0) {
-            return "false";
+            throw new Error("メンバーの登録に失敗しました");
         }
         const member = new RoomMember(res.recordset[0].ルームNo, res.recordset[0].担当者コード);
         return member;
     } catch(e: any) {
-        console.log(e);
-        return e.message
+        console.log(e.message);
+        throw new Error(e.message);
     }
 
 

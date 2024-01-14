@@ -3,7 +3,7 @@ import mssql from "mssql";
 import { config } from "../../config";
 import { Message } from "../model/Message";
 
-export const getAllMessages = async (): Promise<any> => {
+export const getAllMessages = async (): Promise<Message[]> => {
     const query = createSelectAllMessagesQuery();
 
     try {
@@ -12,7 +12,7 @@ export const getAllMessages = async (): Promise<any> => {
 
         console.log("getAllMessages");
         if (res.rowsAffected[0] == 0) {
-            return "false";
+            throw new Error("false") ;
         }
         let messages: Message[] = [];
         res.recordset.forEach((record: any) => {
@@ -23,11 +23,11 @@ export const getAllMessages = async (): Promise<any> => {
     }
     catch (e: any) {
         console.log(e);
-        return e.message;
+        throw new Error(e.message);
     }
 }
 
-export const registerMessage = async (message: Message): Promise<any> => {
+export const registerMessage = async (message: Message): Promise<Message> => {
     const query = createRegisterMessageQuery(message);
 
     try {
@@ -36,13 +36,13 @@ export const registerMessage = async (message: Message): Promise<any> => {
 
         console.log("registerMessage");
         if (res.rowsAffected[0] == 0) {
-            return new Error("false");
+            throw new Error("メッセージの登録に失敗しました") ;
         }
         let message = new Message(res.recordset[0].ルームNo, res.recordset[0].担当者コード, res.recordset[0].担当者名, res.recordset[0].メッセージ, res.recordset[0].日時);
         return message;
     }
     catch (e: any) {
         console.log(e);
-        return new Error(e.message);
+        throw new Error(e.message);
     }
 }

@@ -24,9 +24,3 @@ export class User  {
     //ユーザーが有効かどうか
     flag: number;
 }
-
-export interface ResponseUser  {
-    employeeCode: number;
-    employeeName: string;
-    message: string;
-}
