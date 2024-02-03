@@ -1,99 +1,124 @@
 import express from 'express';
 import { register } from 'ts-node';
 import { registerRoom, registerMember, getAllRooms, getRoomById, getUsersByRoomId, getMessagesById } from '../controllers/roomsController';
-import { resRoom } from '../model/Room';
-import { createSelectAllRoomQuery } from '../components/createQuery';
+import { Room, RoomMember } from '../model/Room';
+import { Message, resMessage } from '../model/Message';
 
 const router = express.Router();
 
 router.get("/", async(req: express.Request, res: express.Response) => {
-    const result = await getAllRooms();
-    res.send(result);
-    res.end();
+    try {
+        const result:Room[] = await getAllRooms();
+        res.status(200).json(result).end();
+    } catch(e: any) {
+        const mes = new resMessage(e.message);
+        res.status(400).json(mes).end();
+    }
+    
 });
 
+//ルームのidから、ルームを取得する
 router.get("/:id", async(req: express.Request, res: express.Response) => {
     if (req.params.id === undefined) {
-        res.send("idが入力されていません");
+        const mes = new resMessage("idが入力されていません");
+        res.status(400).json(mes).end();
         return;
     }
-
-    const result = await getRoomById(Number(req.params.id));
-    res.send(result);
+    try {
+        const result:Room = await getRoomById(Number(req.params.id));
+        res.status(200).json(result).end();
+    } catch(e: any) {
+        const mes = new resMessage(e.message);
+        res.status(400).json(mes).end();
+    }
 })
 
 //ルームのidから、加入しているメンバーを取得する
 router.get("/:id/users", async(req: express.Request, res: express.Response) =>  {
     if (req.params.id === undefined) {
-        res.send("idが入力されていません");
+        const mes = new resMessage("idが入力されていません");
+        res.status(400).json(mes).end();
         return;
     }
 
-    
-    const result = await getUsersByRoomId(Number(req.params.id));
-    res.send(result);
-    res.end();
+    try {
+        const result = await getUsersByRoomId(Number(req.params.id));
+        res.status(200).json(result).end();
+    } catch(e: any) {
+        const mes = new resMessage(e.message);
+        res.status(400).json(mes).end();
+    }
 })
 
 router.get("/:id/messages", async(req: express.Request, res: express.Response) => {
     if (req.params.id === undefined) {
-        res.send("idが入力されていません");
+        const mes = new resMessage("idが入力されていません");
+        res.status(400).json(mes).end();
         return;
     }
 
-    const result = await getMessagesById(Number(req.params.id));
-    res.send(result);
+    try {
+        const result:Message[] = await getMessagesById(Number(req.params.id));
+        res.status(200).json(result).end();
+    } catch(e: any) {
+        const mes = new resMessage(e.message);
+        res.status(400).json(mes).end();
+    }
 
 })
 
 //トークルームの登録
 router.post("/", async(req: express.Request, res: express.Response) => { 
-    let resMessage = {
-        message: ""
-    }
+    
     if (req.body.name === undefined) {
-        resMessage.message = "トークルーム名が入力されていません";
-        res.send(resMessage);
-        res.end();
+        const mes = new resMessage("ルーム名が入力されていません");
+        res.status(400).json(mes).end();
+        return;
     }
 
     //#region トークルームの登録
-    const resR: resRoom = await registerRoom(req.body.name);
+    try {
+        const resR: Room = await registerRoom(req.body.name);
+        res.status(200).json(resR).end();
+    } catch(e: any) {
+        const mes = new resMessage(e.message);
+        res.status(400).json(mes).end();
+    }
     //#endregion
-
-    res.send(resR);
-
-    res.end();
 })
 
 //ルームメンバーの登録
-router.post("/members", (req: express.Request, res: express.Response) => {
-    let resMessage = {
-        message: ""
-    }
+router.post("/members", async (req: express.Request, res: express.Response) => {
+    
     if (req.body.id === undefined) {
-        resMessage.message = "ルームIDが入力されていません";
-        res.send(resMessage);
-        res.end();
+        const mes = new resMessage("ルームIDが入力されていません");
+        res.status(400).json(mes).end();
+        return;
     }
     if (req.body.employeeCode1 === undefined) {
-        resMessage.message = "担当者コードが入力されていません";
-        res.send(resMessage);
-        res.end();
+        const mes = new resMessage("担当者コードが入力されていません");
+        res.status(400).json(mes).end();
+        return;
     }
 
-    //req.bodyから値を取り出す
-    for( const key in req.body) {
-        if (Object.hasOwnProperty.call(req.body, key)) {
-            if (key === "roomId") continue;
-            const value = req.body[key];
-            console.log(`${key}: ${value}`);
-            registerMember(value, req.body.id);
+    try {
+        // RoomMember型の配列の定義
+        let roomMembers: RoomMember[] = [];
+        //req.bodyから値を取り出す
+        for( const key in req.body) {
+            if (Object.hasOwnProperty.call(req.body, key)) {
+                if (key === "roomId") continue;
+                if (!key.includes("employeeCode")) continue;
+                const value = req.body[key];
+                console.log(`${key}: ${value}`);
+                const member:RoomMember = await registerMember(value, req.body.id);
+                roomMembers.push(member);
+            }
         }
+        res.status(200).json(roomMembers).end();
+    } catch (e: any) {
+        res.status(400).send(e.message).end();
     }
-
-
-
     res.end();
 })
 

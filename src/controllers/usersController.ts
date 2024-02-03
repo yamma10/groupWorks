@@ -1,5 +1,5 @@
 import express from "express";
-import { LoginUser, ResponseUser, User } from "../model/User";
+import { LoginUser, User } from "../model/User";
 import {  createLoginQuery, createRegisterPassQuery, createSelectAllUsersQuery, createSelectMailQuery, createSelectMessagesByCodeQuery, createSelectPassByCodeQuery, createSelectRoomsByCodeQuery, createSelectUserByCodeQuery } from "../components/createQuery";
 import mssql from "mssql";
 import {config, options } from "../../config";
@@ -9,16 +9,10 @@ import nodemailer from "nodemailer";
 import { send } from "../components/send";
 import { Otp } from "../model/Otp";
 import { Room } from "../model/Room";
+import { Message } from "../model/Message";
 
 
-export const login = async(loginUser: LoginUser): Promise<ResponseUser> => {
-    //loginの処理
-
-    let user: ResponseUser = {
-        employeeCode: 0,
-        employeeName: "",
-        message: "",
-    };
+export const login = async(loginUser: LoginUser): Promise<User> => {
     
     //クエリの作成
     const query: string = createLoginQuery(loginUser);
@@ -29,32 +23,24 @@ export const login = async(loginUser: LoginUser): Promise<ResponseUser> => {
         const res = await conn.request().query(query)
         //console.log(res)
         
-        user.employeeCode = 0;
         if (res.rowsAffected[0] == 0){
-            user.message = "false"
-            return user;
+            throw new Error("ユーザーが存在しません");
         } else {
             if (res.recordset[0].パスワード != loginUser.password) {
-                user.message = "パスワードが違います"
-                return user;
+                throw new Error("パスワードが違います");
             } else {
-                user.employeeCode = res.recordset[0].担当者コード;
-                user.employeeName = res.recordset[0].担当者名;
-                user.message = "true"
+                const user = new User(res.recordset[0].担当者コード, res.recordset[0].担当者名, res.recordset[0].部署名, res.recordset[0].役職, res.recordset[0].無効フラグ);
+                return user;
             }
         
         }
     } catch(e: any) {
         console.log(e.message)
-        user.message = e.message;
-        return e.message;
+        throw new Error(e.message);
     }
-
-    //loginできたらtrueを返す
-    return user;
 }
 
-export const registerPass = async(employeeCode: number): Promise<any> => {
+export const registerPass = async(employeeCode: number): Promise<void> => {
     const onetimePass: string = generageOntimePass();
     //クエリの作成
     const query: string = createRegisterPassQuery(employeeCode, onetimePass);
@@ -65,23 +51,19 @@ export const registerPass = async(employeeCode: number): Promise<any> => {
 
         const res = await conn.request().query(query)
         if(res.rowsAffected[0] == 0) {
-
-            return "false";
+            throw new Error("ユーザーが存在しません");
         } else {
             console.log("get otp")
             const otp = new Otp(res.recordset[0].担当者コード,res.recordset[0].ワンタイムパスワード);
-            const check = await getAddressAndSendEmail(otp.onetimePass, otp.employeeCode);
-            return "true";
+            await getAddressAndSendEmail(otp.onetimePass, otp.employeeCode);
         }
-        
-        
     } catch(e: any) {
         console.log(e.message)
-        return e.message;
+        throw new Error(e.message);
     }
 }
 
-export const checkPass = async(employeeCode: number, onetimePass: string): Promise<string> => {
+export const checkPass = async(employeeCode: number, onetimePass: string): Promise<void> => {
     const query = createSelectPassByCodeQuery(employeeCode);
     try {
         const conn = await mssql.connect(config);
@@ -89,7 +71,7 @@ export const checkPass = async(employeeCode: number, onetimePass: string): Promi
         const res = await conn.request().query(query)
         if (res.rowsAffected[0] == 0){
             //返却されたレコードがない場合
-            return "ワンタイムパスワードが発行されていないか、期限が切れています";
+            throw new Error("ワンタイムパスワードが発行されていないか、期限が切れています");
         } else if (res.recordset[0].ワンタイムパスワード != onetimePass) {
             //ワンタイムパスワードが違う場合
             let check: boolean = false;
@@ -102,23 +84,23 @@ export const checkPass = async(employeeCode: number, onetimePass: string): Promi
                 }
             });
             if (check) {
-                return "無効なワンタイムパスワードです"
+                throw new Error("無効なワンタイムパスワードです");
             } else {
-                return "ワンタイムパスワードが違います";
+                throw new Error("ワンタイムパスワードが違います");
             }
             
         } else if (res.recordset[0].ワンタイムパスワード == onetimePass) {
-            return "ok";
+            return;
         } else {
-            return "無効なワンタイムパスワードです";
+            throw new Error("無効なワンタイムパスワードです");
         }
     } catch(e: any) {
         console.log(e.message);
-        return e.message;
+        throw new Error(e.message)
     }
 }
 
-export const getAddressAndSendEmail = async(otp:string, employeeCode:number):Promise<string> => {
+export const getAddressAndSendEmail = async(otp:string, employeeCode:number):Promise<void> => {
 
     const query = createSelectMailQuery(employeeCode);
     try {
@@ -130,23 +112,15 @@ export const getAddressAndSendEmail = async(otp:string, employeeCode:number):Pro
             console.log("メールアドレスが登録されていません");
         } else {
             const mailAddress: string = res.recordset[0].メールアドレス;
-            const check = await send(mailAddress, otp);
-            if (check) {
-                console.log("メールを送信しました");
-            } else {
-                console.log("メールを送信できませんでした");
-            }
+            await send(mailAddress, otp);
         }
     } catch(e: any) {
         console.log(e.message);
-        return e.message;
+        throw new Error(e.message);
     }
-
-
-    return "true";
 }
 
-export const getAllUsers = async(): Promise<any> => {
+export const getAllUsers = async(): Promise<User[]> => {
     const query = createSelectAllUsersQuery();
     
     try {
@@ -166,12 +140,12 @@ export const getAllUsers = async(): Promise<any> => {
     }
     catch (e: any) {
         console.log(e);
-        return e.message;
+        throw new Error(e.message);
     }
 
 }
 
-export const getUserByCode = async(employeeCode: number): Promise<any> => {
+export const getUserByCode = async(employeeCode: number): Promise<User> => {
     const query = createSelectUserByCodeQuery(employeeCode);
     
     try {
@@ -186,13 +160,13 @@ export const getUserByCode = async(employeeCode: number): Promise<any> => {
         return user;
     }
     catch (e: any) {
-        console.log(e);
-        return e.message;
+        console.log(e.message);
+        throw new Error(e.message);
     }
 
 }
 
-export const getRoomsByCode = async(employeeCode: number): Promise<any> => {
+export const getRoomsByCode = async(employeeCode: number): Promise<Room[]> => {
     const query = createSelectRoomsByCodeQuery(employeeCode);
 
     try {
@@ -212,22 +186,23 @@ export const getRoomsByCode = async(employeeCode: number): Promise<any> => {
     }
     catch (e: any) {
         console.log(e);
-        return e.message;
+        throw new Error(e.message)
     }
 }
 
-export const getFirstMessagesByCode = async(employeeCode: number): Promise<any> => {
+export const getFirstMessagesByCode = async(employeeCode: number): Promise<Message> => {
     const query = createSelectMessagesByCodeQuery(employeeCode);
 
     try {
+        console.log("get First Messages By Code");
         const conn = await mssql.connect(config);
         const res = await conn.request().query(query);
-        
-        console.log(res.recordset);
-        return res.recordset;
+
+        const message = new Message(res.recordset[0].ルームNo, res.recordset[0].担当者コード, res.recordset[0].担当者名, res.recordset[0].メッセージ, res.recordset[0].日時);
+        return message;
     }
     catch (e: any) {
-        console.log(e);
-        return e.message;
+        console.log(e.message);
+        throw new Error(e.message)
     }
 }

@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import {config, options } from "../../config";
 
-export const send = async(mailAddress: string, otp: string): Promise<boolean>  => {
+export const send = async(mailAddress: string, otp: string): Promise<void>  => {
     const mail = {
         from: process.env.senderAddress,
         to: `${mailAddress}`,
@@ -15,9 +15,6 @@ export const send = async(mailAddress: string, otp: string): Promise<boolean>  =
         console.log(result);
     } catch(e: any) {
         console.log(e.message);
-        return false;
+        throw new Error(e.message);
     }
-
-
-    return true;
 }
