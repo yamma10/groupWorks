@@ -25,7 +25,7 @@ router.get("/:id", async(req: express.Request, res: express.Response) => {
         return;
     }
     try {
-        const result = await getRoomById(Number(req.params.id));
+        const result:Room = await getRoomById(Number(req.params.id));
         res.status(200).json(result).end();
     } catch(e: any) {
         const mes = new resMessage(e.message);
